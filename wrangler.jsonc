@@ -1,0 +1,138 @@
+{
+	"$schema": "node_modules/wrangler/config-schema.json",
+	"name": "chatychat",
+	"main": "src/index.ts",
+	"compatibility_date": "2026-09-21",
+	"observability": { "enabled": true },
+
+	/**
+	 * La direccion publica.
+	 *
+	 * Es la URL que se pega en el panel de Meta y la que ve cualquier
+	 * cliente al conectar su cuenta, asi que va en un dominio propio y
+	 * no en el subdominio `workers.dev` de la cuenta de Cloudflare.
+	 * `webhook.example.com` es un marcador: va el dominio de quien lo despliegue.
+	 *
+	 * No es solo presentacion: el dia que este Worker se parta en dos, o
+	 * se mueva a otra cuenta, la direccion que Meta tiene guardada para
+	 * cada cliente **no cambia**. Cambiarla despues obliga a reconfigurar
+	 * el webhook de todos.
+	 *
+	 * `custom_domain` hace que Cloudflare cree el registro DNS y el
+	 * certificado solo. Meta exige HTTPS con certificado valido.
+	 */
+	"routes": [
+		{ "pattern": "webhook.example.com", "custom_domain": true }
+	],
+
+	/**
+	 * Las bases.
+	 *
+	 * Queda **una sola**, la de la plataforma: quienes son los clientes,
+	 * sus tokens y su estado.
+	 *
+	 * Aqui habia ademas una linea por cliente, con el enlace `C_<clave>`,
+	 * y por eso dar de alta obligaba a redesplegar. Los datos de cada
+	 * cliente viven ahora en su Durable Object, que se crea al nombrarlo.
+	 *
+	 * La de control se queda en D1 a proposito: es una sola, la comparten
+	 * todos, y **se puede consultar desde fuera** con `wrangler d1
+	 * execute`, que es justo lo que se pierde con los objetos. Para
+	 * diagnosticar la plataforma eso vale mucho.
+	 */
+	"d1_databases": [
+		{
+			"binding": "CONTROL",
+			"database_name": "chatychat-control",
+			"database_id": "YOUR_D1_DATABASE_ID"
+		},
+	],
+
+	/**
+	 * Un objeto por cliente, con su propio SQLite.
+	 *
+	 * Esto es lo que sustituye a la lista de bases D1 por cliente que
+	 * habia aqui. La diferencia que importa: un objeto **se crea al
+	 * nombrarlo**, asi que dar de alta a un cliente ya no obliga a tocar
+	 * este archivo ni a desplegar. Alguien se registra en la web y su
+	 * negocio existe en el acto.
+	 *
+	 * `new_sqlite_classes` y no `new_classes`: pide el almacenamiento
+	 * SQLite, que es el que trae consultas de verdad. Con el de clave y
+	 * valor no se podria guardar nada de esto.
+	 */
+	"durable_objects": {
+		"bindings": [
+			{ "name": "CLIENTES", "class_name": "Cliente" }
+		]
+	},
+
+	"migrations": [
+		{ "tag": "v1", "new_sqlite_classes": ["Cliente"] }
+	],
+
+	/**
+	 * Una vez por hora: lo que es de la plataforma, no de un cliente.
+	 *
+	 * Renovar los tokens antes de que caduquen y comprobar que a cada
+	 * cliente le siga llegando. Eso hay que hacerlo recorriendo la lista
+	 * de clientes, asi que vive aqui y no en ningun objeto.
+	 *
+	 * ── Por que ya no es cada cinco minutos ────────────────────────
+	 *
+	 * Porque esa cadencia existia por los **pendientes**: un Worker vive
+	 * lo que dura una peticion y no puede esperar 23 horas, asi que hacia
+	 * falta alguien que pasara a menudo a mirar si a algun cliente le
+	 * tocaba mandar algo.
+	 *
+	 * Ahora cada cliente se despierta solo con su alarma, a su hora
+	 * exacta. Lo que queda aqui es una tarea diaria, y pasar doce veces
+	 * por hora para preguntar si ya es la hora era trabajo por nada.
+	 */
+	"triggers": { "crons": ["0 * * * *"] },
+
+	/**
+	 * El entorno de desarrollo, que es el que usa `npm run dev`.
+	 *
+	 * -- Por que el cliente de prueba vive aqui y no arriba -------------
+	 *
+	 * Porque su base **no existe en Cloudflare**: su identificador es de
+	 * relleno y solo funciona en local, donde wrangler crea la base en
+	 * disco al primer uso. Si estuviera en la lista de arriba, un
+	 * `npm run deploy` intentaria enlazar una base inventada.
+	 *
+	 * Los entornos de wrangler **no heredan las bases** del bloque
+	 * principal, asi que `CONTROL` hay que repetirlo. Es lo que hace que
+	 * esto funcione: en local, `CONTROL` apunta a una copia en disco y no
+	 * a la de produccion, o sea que probar no puede ensuciar los datos de
+	 * ningun cliente de verdad.
+	 */
+	"env": {
+		"desarrollo": {
+			// Sin esto, el entorno HEREDA las rutas de arriba, o sea el
+			// dominio webhook.example.com. Un despliegue de desarrollo se lo
+			// llevaria del Worker de produccion y los clientes dejarian de
+			// recibir, sin que nada lo explique.
+			"routes": [],
+
+			"d1_databases": [
+				{
+					"binding": "CONTROL",
+					"database_name": "chatychat-control",
+					"database_id": "local-todavia-sin-crear"
+				}
+			],
+
+			// El cliente de prueba ya no necesita una base declarada: su
+			// objeto se crea al nombrarlo, igual que en produccion. Antes
+			// habia aqui un `C_prueba` con un identificador de relleno que
+			// solo funcionaba en local.
+			"durable_objects": {
+				"bindings": [
+					{ "name": "CLIENTES", "class_name": "Cliente" }
+				]
+			},
+			"triggers": { "crons": ["0 * * * *"] }
+		}
+	}
+}

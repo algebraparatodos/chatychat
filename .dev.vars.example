@@ -1,0 +1,16 @@
+# Secrets for `npm run dev`. Copy to .dev.vars. These values only work locally:
+# the Worker accepts webhooks signed with them, and any reply it tries to send
+# fails at Meta because the test clients carry invented tokens.
+META_APP_SECRET=local-app-secret
+META_APP_SECRET_INSTAGRAM=local-instagram-app-secret
+META_APP_SECRET_FACEBOOK=local-facebook-app-secret
+META_VERIFY_TOKEN=local-verify-token
+ADMIN_TOKEN=local-admin-token
+
+# Public identifiers of the two Meta apps (they appear in the OAuth URL).
+META_INSTAGRAM_APP_ID=YOUR_META_INSTAGRAM_APP_ID
+META_FACEBOOK_APP_ID=YOUR_META_FACEBOOK_APP_ID
+META_FACEBOOK_CONFIG_ID=YOUR_FACEBOOK_LOGIN_CONFIG_ID
+
+# Optional: health and privacy alerts by email.
+# RESEND_API_KEY=

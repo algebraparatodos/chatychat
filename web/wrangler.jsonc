@@ -1,0 +1,40 @@
+{
+	"$schema": "node_modules/wrangler/config-schema.json",
+	"name": "chatychat-web",
+	"main": ".open-next/worker.js",
+	"compatibility_date": "2026-09-01",
+	"compatibility_flags": ["nodejs_compat"],
+	"assets": { "directory": ".open-next/assets", "binding": "ASSETS" },
+	"workers_dev": false,
+	"observability": { "enabled": true },
+
+	"routes": [
+		{ "pattern": "app.example.com", "custom_domain": true }
+	],
+
+	/**
+	 * El objeto de cada cliente, que vive en el OTRO Worker.
+	 *
+	 * `script_name` es lo que lo hace posible: la clase `Cliente` esta
+	 * definida y desplegada en el Worker `chatychat`, el del webhook, y
+	 * este panel se engancha al mismo espacio de objetos. No hay dos
+	 * copias ni nada que sincronizar: es literalmente el mismo objeto.
+	 *
+	 * Se hace asi y no llamando a la puerta de servicio por HTTP porque
+	 * esto es una llamada directa —sin red, sin secreto que guardar, y
+	 * con los tipos comprobados en el momento de compilar.
+	 */
+	"durable_objects": {
+		"bindings": [
+			{ "name": "CLIENTES", "class_name": "Cliente", "script_name": "chatychat" }
+		]
+	},
+
+	"d1_databases": [
+		{
+			"binding": "CONTROL",
+			"database_name": "chatychat-control",
+			"database_id": "YOUR_D1_DATABASE_ID"
+		}
+	]
+}

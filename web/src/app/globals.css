@@ -1,0 +1,159 @@
+/*
+ * El color del panel, en un solo sitio.
+ *
+ * ── Por qué todo son variables y ninguna pantalla lleva hexadecimales ─
+ *
+ * Porque el modo oscuro es exactamente esto: **las mismas variables con
+ * otros valores.** Si una pantalla escribiera `#FFFFFF` a mano, en
+ * oscuro se quedaría blanca y habría que ir a buscarla. Con variables no
+ * hay nada que buscar: se redefinen abajo y el panel entero cambia.
+ *
+ * Es también la razón de que el panel del que viene esta estructura se
+ * pudiera pasar a oscuro sin tocar una sola pantalla. Lo que no se copia
+ * de allá es la paleta: era la identidad de otro negocio, no la de este
+ * producto.
+ *
+ * ── Los tres estados del tema, y por qué son tres y no dos ──────────
+ *
+ *   automático : no hay nada guardado. Manda el sistema operativo.
+ *   claro      : lo eligió la persona. Gana aunque el sistema esté oscuro.
+ *   oscuro     : lo eligió la persona. Gana aunque el sistema esté claro.
+ *
+ * Con dos estados, quien tiene el móvil en oscuro y quiere el panel en
+ * claro no tiene forma de pedirlo. De ahí el `:not([data-tema="claro"])`
+ * que envuelve la consulta del sistema: sin él, una preferencia expresa
+ * la pisaría el sistema operativo y el botón parecería roto.
+ */
+
+:root {
+    /* La marca. Verde azulado. */
+    --tono: #0e7c86;
+    --tono-alto: #0a5f67;
+    --tono-flojo: #dcefef;
+    --sobre-tono: #ffffff;
+
+    /* El papel y la tinta. */
+    --fondo: #f7f6f4;
+    --papel: #ffffff;
+    --papel-alto: #fbfaf9;
+    --tinta: #1c1a19;
+    --tinta-media: #67615c;
+    --tinta-floja: #97908a;
+
+    --borde: #e5e1dc;
+    --borde-duro: #cec8c1;
+
+    /* Los estados. No compiten con la marca a propósito. */
+    --ok: #3f7a4f;
+    --ok-flojo: #e6efe6;
+    --espera: #92680f;
+    --espera-flojo: #f7eed9;
+    --mal: #a5453d;
+    --mal-flojo: #f6e3e1;
+
+    --sombra: 0 1px 2px rgb(28 26 25 / 0.06), 0 1px 1px rgb(28 26 25 / 0.04);
+
+    color-scheme: light;
+}
+
+/* El sistema manda sólo si la persona no eligió. */
+@media (prefers-color-scheme: dark) {
+    :root:not([data-tema="claro"]) {
+        --tono: #4cc4ce;
+        --tono-alto: #7ad8e0;
+        --tono-flojo: #123236;
+        --sobre-tono: #06181b;
+
+        --fondo: #131414;
+        --papel: #1b1d1d;
+        --papel-alto: #212423;
+        --tinta: #eceae7;
+        --tinta-media: #a9a29b;
+        --tinta-floja: #7b746e;
+
+        --borde: #2c2f2e;
+        --borde-duro: #3e4241;
+
+        --ok: #6fae7c;
+        --ok-flojo: #1a2a1e;
+        --espera: #d4a53f;
+        --espera-flojo: #2e2515;
+        --mal: #dd7f76;
+        --mal-flojo: #2e1a18;
+
+        --sombra: 0 1px 2px rgb(0 0 0 / 0.4), 0 1px 1px rgb(0 0 0 / 0.3);
+
+        color-scheme: dark;
+    }
+}
+
+/* Y la elección expresa gana siempre, en los dos sentidos. */
+:root[data-tema="oscuro"] {
+    --tono: #4cc4ce;
+    --tono-alto: #7ad8e0;
+    --tono-flojo: #123236;
+    --sobre-tono: #06181b;
+
+    --fondo: #131414;
+    --papel: #1b1d1d;
+    --papel-alto: #212423;
+    --tinta: #eceae7;
+    --tinta-media: #a9a29b;
+    --tinta-floja: #7b746e;
+
+    --borde: #2c2f2e;
+    --borde-duro: #3e4241;
+
+    --ok: #6fae7c;
+    --ok-flojo: #1a2a1e;
+    --espera: #d4a53f;
+    --espera-flojo: #2e2515;
+    --mal: #dd7f76;
+    --mal-flojo: #2e1a18;
+
+    --sombra: 0 1px 2px rgb(0 0 0 / 0.4), 0 1px 1px rgb(0 0 0 / 0.3);
+
+    color-scheme: dark;
+}
+
+* {
+    box-sizing: border-box;
+}
+
+html,
+body {
+    margin: 0;
+    padding: 0;
+}
+
+body {
+    background: var(--fondo);
+    color: var(--tinta);
+    font-family: var(--tipo-ui), system-ui, -apple-system, sans-serif;
+    font-size: 14px;
+    line-height: 1.5;
+    -webkit-font-smoothing: antialiased;
+}
+
+/* El cambio de tema se acompaña, pero sin animar la primera pintura. */
+body.listo,
+body.listo * {
+    transition: background-color 0.18s ease, border-color 0.18s ease, color 0.18s ease;
+}
+
+@media (prefers-reduced-motion: reduce) {
+    body.listo,
+    body.listo * {
+        transition: none;
+    }
+}
+
+a {
+    color: inherit;
+}
+
+:focus-visible {
+    outline: 2px solid var(--tono);
+    outline-offset: 2px;
+    border-radius: 3px;
+}

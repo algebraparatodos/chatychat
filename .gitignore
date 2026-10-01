@@ -1,0 +1,13 @@
+node_modules/
+.wrangler/
+.dev.vars
+.claves.env
+*.local.jsonc
+*.tsbuildinfo
+
+web/node_modules/
+web/.next/
+web/.open-next/
+web/.wrangler/
+web/cloudflare-env.d.ts
+web/next-env.d.ts

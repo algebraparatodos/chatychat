@@ -1,0 +1,25 @@
+{
+    "name": "chatychat",
+    "version": "0.1.0",
+    "description": "Instagram and Messenger auto-replies for many small businesses from one Cloudflare Workers install. One Durable Object per client.",
+    "type": "module",
+    "private": true,
+    "engines": {
+        "node": ">=22.18"
+    },
+    "scripts": {
+        "test": "node --import ./test/cargar.mjs --test test/*.test.ts",
+        "typecheck": "tsc --noEmit && tsc --noEmit -p tsconfig.test.json",
+        "dev": "wrangler dev --env desarrollo",
+        "deploy": "wrangler deploy --env=\"\"",
+        "preparar-pruebas": "node herramientas/preparar-pruebas.mjs",
+        "probar": "node herramientas/probar.mjs",
+        "simular": "node herramientas/simular.mjs"
+    },
+    "devDependencies": {
+        "@cloudflare/workers-types": "^5.20260917.1",
+        "@types/node": "^24.19.0",
+        "typescript": "^5.9.0",
+        "wrangler": "^4.0.0"
+    }
+}
